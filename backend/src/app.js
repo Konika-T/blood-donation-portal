@@ -11,11 +11,16 @@ const routes = require('./routes');
 
 const app = express();
 
+// Render (and most hosts) put a reverse proxy in front of the app.
+// Without this, every visitor looks like the same IP and shares ONE rate-limit bucket.
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(helmet());
 
 // CORS – allow origins listed in CLIENT_URL env (comma-separated)
-const allowedOrigins = (process.env.CLIENT_URL || '').split(',').map(o => o.trim());
+// Trailing slashes are stripped so https://app.vercel.app/ still matches https://app.vercel.app
+const allowedOrigins = (process.env.CLIENT_URL || '').split(',').map(o => o.trim().replace(/\/+$/, '')).filter(Boolean);
 app.use(cors({
   origin: (origin, cb) => {
     // Allow Postman / server-to-server (no origin) and whitelisted origins

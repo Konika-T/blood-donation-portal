@@ -5,9 +5,9 @@ const bcrypt = require('bcryptjs');
 const connectDB = require('./config/db');
 const { User, BloodRequest, DonorResponse } = require('./models');
 
-async function seed() {
-  await connectDB();
-
+// runSeed assumes a DB connection already exists, so server.js can call it
+// without opening a second connection or killing the running server.
+async function runSeed() {
   const hash = pwd => bcrypt.hash(pwd, 10);
 
   // ── Admin ──────────────────────────────────────────────────────────────────
@@ -68,7 +68,14 @@ async function seed() {
   }
 
   console.log('✅ Seed complete');
-  process.exit(0);
 }
 
-seed().catch(err => { console.error(err); process.exit(1); });
+module.exports = runSeed;
+
+// Only when run directly (npm run seed): connect, seed, then exit.
+if (require.main === module) {
+  connectDB()
+    .then(runSeed)
+    .then(() => process.exit(0))
+    .catch(err => { console.error(err); process.exit(1); });
+}

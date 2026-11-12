@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
 
 // Socket.io – allow same origins as Express CORS
-const allowedOrigins = (process.env.CLIENT_URL || '').split(',').map(o => o.trim());
+const allowedOrigins = (process.env.CLIENT_URL || '').split(',').map(o => o.trim().replace(/\/+$/, '')).filter(Boolean);
 const io = new Server(server, {
   cors: { origin: allowedOrigins, credentials: true },
 });
@@ -38,7 +38,7 @@ async function start() {
   const adminExists = await User.findOne({ role: 'admin' });
   if (!adminExists) {
     console.log('🌱 No admin found – running seed…');
-    require('./seed');
+    await require('./seed')(); // finish seeding BEFORE we start listening
   }
 
   server.listen(PORT, () => {
